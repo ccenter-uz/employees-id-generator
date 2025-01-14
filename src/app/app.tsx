@@ -4,7 +4,7 @@ import { Button, Divider, Modal, Space, Table, Tag } from "antd";
 import type { TableColumnsType, TableProps } from "antd";
 import { AnyObject } from "antd/es/_util/type";
 import Search from "antd/es/input/Search";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import QRCode from "react-qr-code";
 import { Link } from "react-router-dom";
 import generatePDF, { Resolution, Margin } from "react-to-pdf";
@@ -12,7 +12,7 @@ import generatePDF, { Resolution, Margin } from "react-to-pdf";
 import "./main.css";
 import { LogoSvg } from "./ui/logo-svg";
 
-const DOMAIN = "https://employees.ccenter.uz";
+const DOMAIN = "https://employees.ccenter.uz:5001";
 
 interface DataType {
   key: React.Key;
@@ -40,6 +40,7 @@ const columns: TableColumnsType<DataType> = [
     ),
   },
 ];
+
 const App: React.FC = () => {
   const [selectedRowsLength, setSelectedRowsLength] = useState(0);
   const [selectedRows, setSelectedRows] = useState<AnyObject[]>([]);
@@ -105,13 +106,23 @@ const App: React.FC = () => {
 
   const rowSelection: TableProps<DataType>["rowSelection"] = {
     onChange: (selectedRowKeys: React.Key[], selectedRows: AnyObject[]) => {
-      setSelectedRowsLength(selectedRowKeys.length);
-      const result = splitArray(selectedRows, 10);
+      const localStorageData = localStorage.getItem("selectedRows");
+      const parsedData = localStorageData ? JSON.parse(localStorageData) : [];
+
+      const newData = [...parsedData, ...selectedRows]; // Add new data to parsedData.
+
+      const data = newData.filter(
+        (item: AnyObject, index: number) =>
+          newData.findIndex((i: AnyObject) => i.ID === item.ID) === index,
+      );
+      localStorage.setItem("selectedRows", JSON.stringify(data));
+
+      const result = splitArray(data, 10);
+      setSelectedRowsLength(data.length);
       setSelectedRows(result);
     },
     getCheckboxProps: (record: any) => ({
-      disabled: record["ID"] === "", // Column configuration not to be checked
-      // name: record.name,
+      disabled: record["ID"] === "",
     }),
   };
 
@@ -170,6 +181,20 @@ const App: React.FC = () => {
     );
   };
 
+  const resetSelection = () => {
+    setSelectedRows([]);
+    setSelectedRowsLength(0);
+    localStorage.removeItem("selectedRows");
+  };
+
+  useLayoutEffect(() => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
+
+    if (!isLoggedIn) {
+      window.location.replace("/log-in");
+    }
+  }, []);
+
   useEffect(() => {
     if (searchText === "") {
       fetchData();
@@ -184,13 +209,19 @@ const App: React.FC = () => {
         const search = searchText.toLowerCase();
         return fio.includes(search) || id.includes(search);
       });
-      console.log(filteredData, "filteredData");
 
       setData(filteredData);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchText]);
+
+  useEffect(() => {
+    const localStorageData = localStorage.getItem("selectedRows");
+    const parsedData = localStorageData ? JSON.parse(localStorageData) : [];
+    setSelectedRowsLength(parsedData.length);
+    setSelectedRows(splitArray(parsedData, 10));
+  }, []);
 
   return (
     <div
@@ -215,16 +246,26 @@ const App: React.FC = () => {
           style={{ width: 250 }}
         />
         <br />
-        <Button
-          style={{ width: "200px" }}
-          type="primary"
-          size="large"
-          disabled={selectedRowsLength === 0}
-          icon={<PrinterOutlined />}
-          onClick={showModal}
-        >
-          Print ({selectedRowsLength} selected)
-        </Button>
+        <div>
+          <Button
+            style={{ width: "200px" }}
+            type="primary"
+            size="large"
+            disabled={selectedRowsLength === 0}
+            icon={<PrinterOutlined />}
+            onClick={showModal}
+          >
+            Print ({selectedRowsLength} selected)
+          </Button>
+          <Button
+            style={{ marginLeft: "8px" }}
+            danger
+            size="large"
+            onClick={resetSelection}
+          >
+            Reset
+          </Button>
+        </div>
       </Space>
       <Divider />
       <Table
@@ -235,7 +276,6 @@ const App: React.FC = () => {
         bordered
         pagination={{ pageSize: 30 }}
       />
-
       <Modal
         title="Print"
         open={isModalOpen}

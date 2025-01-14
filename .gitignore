@@ -3,6 +3,7 @@ keystores/
 *.jks
 
 .env*
+package-lock.json*
 !.env.sample
 !.env.test
 
