@@ -13,11 +13,13 @@ import "./main.css";
 import { LogoSvg } from "./ui/logo-svg";
 
 const DOMAIN = "https://employees.ccenter.uz:5001";
+const SHEETS_URL =
+  "https://script.google.com/macros/s/AKfycbzQGbJVrImSnPcSPlLV-gz9MNu7laoJmVW7KYA9l_pUqqOMoECwS16SUcXiioOJI9mE/exec";
 
 interface DataType {
   key: React.Key;
   name: string;
-  ["BEDJIK STATUS"]: boolean;
+  ["BEDJIK STATUS"]: string | boolean;
   FIO: string;
   ID: string;
 }
@@ -35,8 +37,10 @@ const columns: TableColumnsType<DataType> = [
   {
     title: "BEDJIK STATUS",
     dataIndex: "BEDJIK STATUS",
-    render: (val: boolean) => (
-      <Tag color={!val ? "green" : "red"}>{!val ? "Given" : "Not Given"}</Tag>
+    render: (val: string) => (
+      <Tag color={val === "TRUE" ? "green" : "red"}>
+        {val === "TRUE" ? "Given" : "Not Given"}
+      </Tag>
     ),
     filters: [
       {
@@ -100,6 +104,11 @@ const App: React.FC = () => {
           setPdfLoading(false);
           setIsModalOpen(false);
         });
+    }
+
+    const data = localStorage.getItem("selectedRows");
+    if (data) {
+      statusWriter(JSON.parse(data).map((item: any) => item.ID));
     }
   };
 
@@ -196,6 +205,26 @@ const App: React.FC = () => {
     setSelectedRows([]);
     setSelectedRowsLength(0);
     localStorage.removeItem("selectedRows");
+  };
+
+  const statusWriter = (idsToUpdate: string[]) => {
+    fetch(
+      `https://script.google.com/macros/s/AKfycbzQGbJVrImSnPcSPlLV-gz9MNu7laoJmVW7KYA9l_pUqqOMoECwS16SUcXiioOJI9mE/exec?callback=handleResponse&ids=${idsToUpdate.join(
+        ",",
+      )}`,
+      {
+        method: "GET",
+      },
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          console.log(`Successfully updated ${data.result} rows`);
+        } else {
+          console.error(`Error: ${data.message}`);
+        }
+      })
+      .catch((error) => console.error("Request failed", error));
   };
 
   useLayoutEffect(() => {
