@@ -17,9 +17,9 @@ const DOMAIN = "https://employees.ccenter.uz:5001";
 interface DataType {
   key: React.Key;
   name: string;
-  age: number;
-  address: string;
-  status: boolean;
+  ["BEDJIK STATUS"]: boolean;
+  FIO: string;
+  ID: string;
 }
 
 const columns: TableColumnsType<DataType> = [
@@ -36,8 +36,19 @@ const columns: TableColumnsType<DataType> = [
     title: "BEDJIK STATUS",
     dataIndex: "BEDJIK STATUS",
     render: (val: boolean) => (
-      <Tag color={val ? "green" : "red"}>{val ? "Active" : "Inactive"}</Tag>
+      <Tag color={!val ? "green" : "red"}>{!val ? "Given" : "Not Given"}</Tag>
     ),
+    filters: [
+      {
+        text: "Given",
+        value: "TRUE",
+      },
+      {
+        text: "Not Given",
+        value: "FALSE",
+      },
+    ],
+    onFilter: (value, record) => record["BEDJIK STATUS"] === value,
   },
 ];
 
