@@ -41,7 +41,7 @@ const PersonCard: React.FC<{ data: AnyObject }> = ({ data }) => {
           )}
         </Col>
         <Col span={18}>
-          <Title level={4}>F.I.O: {data["FIO"]}</Title>
+          <Title level={4}>F.I.Sh: {data["FIO"]}</Title>
           <Text strong>ID: </Text>
           <Text>{data["ID"]}</Text>
           <br />
@@ -52,7 +52,7 @@ const PersonCard: React.FC<{ data: AnyObject }> = ({ data }) => {
       <Divider />
       <Row gutter={[16, 16]}>
         <Col span={12}>
-          <Text strong>{"BO'LIM NOMI"}: </Text>
+          <Text strong>{"Bo'linma"}: </Text>
           <Text>{data["BO'LIM NOMI"]}</Text>
         </Col>
         <Col span={12}>
@@ -144,7 +144,8 @@ export const EmployeeInfo: React.FC = () => {
     >
       <div
         style={{
-          width: "210mm",
+          minWidth: "210mm",
+          maxWidth: "210mm",
           minHeight: "297mm",
           padding: "20mm",
           margin: "auto",

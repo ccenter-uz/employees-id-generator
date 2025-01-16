@@ -12,10 +12,7 @@ import generatePDF, { Resolution, Margin } from "react-to-pdf";
 import "./main.css";
 import { LogoSvg } from "./ui/logo-svg";
 
-const DOMAIN = "https://employees.ccenter.uz:5001";
-const SHEETS_URL =
-  "https://script.google.com/macros/s/AKfycbzQGbJVrImSnPcSPlLV-gz9MNu7laoJmVW7KYA9l_pUqqOMoECwS16SUcXiioOJI9mE/exec";
-
+const DOMAIN = "http://employees.ccenter.uz:5001";
 interface DataType {
   key: React.Key;
   name: string;
