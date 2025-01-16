@@ -25,7 +25,7 @@ const columns: TableColumnsType<DataType> = [
   {
     title: "ID",
     dataIndex: "ID",
-    render: (text: string) => <Link to={`/employees/${text}`}>{text}</Link>,
+    render: (text: string) => <Link to={`/employee/${text}`}>{text}</Link>,
   },
   {
     title: "FIO",
@@ -354,7 +354,7 @@ const App: React.FC = () => {
                                 <QRCode
                                   size={256}
                                   fgColor="#3D6394"
-                                  value={DOMAIN + "/employees/" + row["ID"]}
+                                  value={DOMAIN + "/employee/" + row["ID"]}
                                   viewBox={`0 0 256 256`}
                                 />
                               </div>

@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { URL as sheetUrl } from "./sheets-config";
 import { LogoSvg } from "./ui/logo-svg";
+import "./main.css";
 
 const { Title, Text } = Typography;
 
@@ -141,6 +142,7 @@ export const EmployeeInfo: React.FC = () => {
     <div
       style={{ width: "100%", minHeight: "100vh", display: "flex" }}
       onContextMenu={disableRightClick}
+      className="noselect"
     >
       <div
         style={{
