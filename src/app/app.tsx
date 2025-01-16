@@ -359,7 +359,7 @@ const App: React.FC = () => {
                                 />
                               </div>
                               <div className="card-info">
-                                <p>
+                                <p style={{ textWrap: "nowrap" }}>
                                   {" "}
                                   <strong>ID:</strong> {row["ID"]}
                                 </p>
