@@ -1,16 +1,15 @@
-stages:          # List of stages for jobs, and their order of execution
-  - build
+stages:
   - deploy
 
-build-job:       # This job runs in the build stage, which runs first.
-  stage: build
+deploy_to_production:
+  stage: deploy
+  only:
+    - main  # Запускать только при изменениях в ветке main
   script:
-    - echo "Compiling the code..."
-    - echo "Compile complete."
-
-deploy-job:      # This job runs in the deploy stage.
-  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
-  environment: production
-  script:
-    - echo "Deploying application..."
-    - echo "Application successfully deployed."
+    - cd /home/user/Projects/employees-id-generator
+    - git pull origin main
+    - npm install
+    - npm run build
+    - pm2 restart employees-id-generate
+  tags:
+    - deploy-runner  # Убедитесь, что ваш Runner привязан к серверу деплоя и имеет этот тег
