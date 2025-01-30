@@ -11,5 +11,3 @@ deploy_to_production:
     - npm install
     - npm run build
     - pm2 restart employees-id-generate
-  tags:
-    - deploy-runner  # Убедитесь, что ваш Runner привязан к серверу деплоя и имеет этот тег
