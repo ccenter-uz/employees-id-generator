@@ -7,6 +7,9 @@ deploy_to_production:
     - main  # Запускать только при изменениях в ветке main
   script:
     - cd /home/user/Projects/employees-id-generator
+    - git stash  # Сохраняем локальные изменения
+    - git pull origin main
+    - git stash pop
     - git pull origin main
     - npm install
     - npm run build
