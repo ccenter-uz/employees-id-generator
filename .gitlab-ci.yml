@@ -1,16 +1,26 @@
 stages:
+  - build
   - deploy
 
-deploy_to_production:
-  stage: deploy
-  only:
-    - main  # Запускать только при изменениях в ветке main
+# Сборка Docker образа
+build_image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
   script:
-    - cd /home/user/Projects/employees-id-generator
-    - git stash  # Сохраняем локальные изменения
-    - git pull origin main
-    - git stash pop
-    - git pull origin main
-    - npm install
-    - npm run build
-    - sudo -u user /home/user/.nvm/versions/node/v22.11.0/bin/pm2 restart employees-id-generate
+    - docker build -t employees:latest .
+    - docker tag employees:latest gitlab.ccenter.uz/root/employees-id-generator:latest
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push gitlab.ccenter.uz/root/employees-id-generator:latest
+
+# Развертывание образа
+deploy_image:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Развертывание образа"
+    # Используйте команду для развертывания, если она у вас настроена
+    # Например:
+    # - docker pull gitlab.ccenter.uz/root/employees-id-generator:latest
+    # - docker-compose up -d
