@@ -15,8 +15,6 @@ build_image:
     - docker push gitlab.ccenter.uz/root/employees-id-generator:latest
   tags:
     - docker
-  # Привилегированный режим нужен для доступа к Docker сокету
-  privileged: true
 
 # Развертывание образа
 deploy_image:
