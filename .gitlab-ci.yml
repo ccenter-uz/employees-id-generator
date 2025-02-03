@@ -2,25 +2,24 @@ stages:
   - build
   - deploy
 
-# Определяем общие переменные
 variables:
-  DOCKER_HOST: tcp://docker:2375
   DOCKER_DRIVER: overlay2
-  PROJECT_DIR: "/home/user/Projects/employees-id-generator"
+  DOCKER_HOST: "unix:///var/run/docker.sock"  # Используем локальный сокет Docker
 
 build-job:
   stage: build
+  image: node:22.11.0
+  before_script:
+    - cd $CI_PROJECT_DIR
   script:
-    - cd $PROJECT_DIR
+    - docker info  # Проверяем доступность Docker
     - docker build -t employees .
   only:
-    - main
+    - main  # Замените на вашу основную ветку
 
 deploy-job:
   stage: deploy
   script:
-    - docker stop employees || true  # Останавливаем контейнер, если он уже запущен
-    - docker rm employees || true    # Удаляем старый контейнер
-    - docker run -d --name employees -p 3007:80 employees
+    - docker run -d -p 3007:80 employees
   only:
-    - main  # Замените на основную ветку вашего проекта
+    - main  # Замените на вашу основную ветку
