@@ -14,7 +14,7 @@ build-job:
     - cd $PROJECT_DIR
     - docker build -t employees .
   only:
-    - main  # Замените на основную ветку вашего проекта
+    - main
 
 deploy-job:
   stage: deploy
