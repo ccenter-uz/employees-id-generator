@@ -7,12 +7,13 @@ build_image:
   stage: build
   image: docker:latest
   services:
-    - docker:dind
+    DOCKER_HOST: unix:///var/run/docker.sock
   script:
     - docker build -t employees:latest .
     - docker tag employees:latest gitlab.ccenter.uz/root/employees-id-generator:latest
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker push gitlab.ccenter.uz/root/employees-id-generator:latest
+  privileged: true
 
 # Развертывание образа
 deploy_image:
