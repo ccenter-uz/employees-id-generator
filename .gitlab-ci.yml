@@ -7,12 +7,15 @@ build_image:
   stage: build
   image: docker:latest
   variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
+    DOCKER_HOST: unix:///var/run/docker.sock  # Используем сокет Docker на сервере
   script:
     - docker build -t employees:latest .
     - docker tag employees:latest gitlab.ccenter.uz/root/employees-id-generator:latest
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
     - docker push gitlab.ccenter.uz/root/employees-id-generator:latest
+  tags:
+    - docker
+  # Привилегированный режим нужен для доступа к Docker сокету
   privileged: true
 
 # Развертывание образа
@@ -21,7 +24,7 @@ deploy_image:
   image: alpine:latest
   script:
     - echo "Развертывание образа"
-    # Используйте команду для развертывания, если она у вас настроена
-    # Например:
-    # - docker pull gitlab.ccenter.uz/root/employees-id-generator:latest
-    # - docker-compose up -d
+    - docker pull gitlab.ccenter.uz/root/employees-id-generator:latest
+    - docker-compose up -d
+  tags:
+    - docker
