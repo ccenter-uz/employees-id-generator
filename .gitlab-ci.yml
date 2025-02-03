@@ -6,7 +6,7 @@ stages:
 build_image:
   stage: build
   image: docker:latest
-  services:
+  variables:
     DOCKER_HOST: unix:///var/run/docker.sock
   script:
     - docker build -t employees:latest .
