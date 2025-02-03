@@ -2,27 +2,25 @@ stages:
   - build
   - deploy
 
-# Сборка Docker образа
-build_image:
-  stage: build
-  image: docker:latest
-  variables:
-    DOCKER_HOST: unix:///var/run/docker.sock  # Используем сокет Docker на сервере
-  script:
-    - docker build -t employees:latest .
-    - docker tag employees:latest gitlab.ccenter.uz/root/employees-id-generator:latest
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-    - docker push gitlab.ccenter.uz/root/employees-id-generator:latest
-  tags:
-    - docker
+# Определяем общие переменные
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
+  PROJECT_DIR: "/home/user/Projects/employees-id-generator"
 
-# Развертывание образа
-deploy_image:
-  stage: deploy
-  image: alpine:latest
+build-job:
+  stage: build
   script:
-    - echo "Развертывание образа"
-    - docker pull gitlab.ccenter.uz/root/employees-id-generator:latest
-    - docker-compose up -d
-  tags:
-    - docker
+    - cd $PROJECT_DIR
+    - docker build -t employees .
+  only:
+    - main  # Замените на основную ветку вашего проекта
+
+deploy-job:
+  stage: deploy
+  script:
+    - docker stop employees || true  # Останавливаем контейнер, если он уже запущен
+    - docker rm employees || true    # Удаляем старый контейнер
+    - docker run -d --name employees -p 3007:80 employees
+  only:
+    - main  # Замените на основную ветку вашего проекта
