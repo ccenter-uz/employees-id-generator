@@ -12,7 +12,7 @@ import generatePDF, { Resolution, Margin } from "react-to-pdf";
 import "./main.css";
 import { LogoSvg } from "./ui/logo-svg";
 
-const DOMAIN = "http://employees.ccenter.uz:5001";
+const DOMAIN = "https://employees.ccenter.uz";
 interface DataType {
   key: React.Key;
   name: string;
