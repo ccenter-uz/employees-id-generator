@@ -20,8 +20,8 @@ build-job:
 deploy-job:
   stage: deploy
   script:
-    - docker stop $(docker ps -q --filter ancestor=employees) || true
-    - docker rm $(docker ps -qa --filter ancestor=employees) || true
+    - docker stop employees || true
+    - docker rm employees || true
     - docker run -d --name employees -p 3007:80 employees:latest
   only:
     - main
