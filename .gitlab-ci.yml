@@ -16,3 +16,12 @@ build-job:
     - docker build --build-arg VITE_APP_VERSION=$VITE_APP_VERSION --build-arg VITE_APP_GITHUB_LINK=$VITE_APP_GITHUB_LINK --build-arg VITE_APP_RELEASES_LINK=$VITE_APP_RELEASES_LINK -t employees .
   only:
     - main
+
+deploy-job:
+  stage: deploy
+  script:
+    - docker stop $(docker ps -q --filter ancestor=employees) || true
+    - docker rm $(docker ps -qa --filter ancestor=employees) || true
+    - docker run -d -p 3007:80 employees
+  only:
+    - main
