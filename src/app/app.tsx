@@ -32,7 +32,7 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: "FIO",
   },
   {
-    title: "BEDJIK STATUS11",
+    title: "BEDJIK STATUS",
     dataIndex: "BEDJIK STATUS",
     render: (val: string) => (
       <Tag color={val === "TRUE" ? "green" : "red"}>
