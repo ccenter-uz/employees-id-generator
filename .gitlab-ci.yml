@@ -13,7 +13,7 @@ build-job:
     - cd $CI_PROJECT_DIR
   script:
     - docker info  # Проверяем доступность Docker
-    - docker build -t employees .
+    - docker build --build-arg VITE_APP_VERSION=$VITE_APP_VERSION --build-arg VITE_APP_GITHUB_LINK=$VITE_APP_GITHUB_LINK --build-arg VITE_APP_RELEASES_LINK=$VITE_APP_RELEASES_LINK -t employees .
   only:
     - main  # Замените на вашу основную ветку
 
