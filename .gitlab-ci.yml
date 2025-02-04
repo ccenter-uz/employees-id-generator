@@ -20,7 +20,7 @@ deploy-job:
   stage: deploy
   script:
     - docker stop $(docker ps -q --filter ancestor=employees) || true
-    - docker rm $(docker ps -q --filter ancestor=employees) || true
+    - docker rm $(docker ps -qa --filter ancestor=employees) || true
     - docker run -d -p 3007:80 employees
   only:
     - main  # Замените на вашу основную ветку
