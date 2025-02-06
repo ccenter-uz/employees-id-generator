@@ -14,6 +14,7 @@ build-job:
     - git pull origin main
   script:
     - docker build --build-arg VITE_APP_VERSION=$VITE_APP_VERSION --build-arg VITE_APP_GITHUB_LINK=$VITE_APP_GITHUB_LINK --build-arg VITE_APP_RELEASES_LINK=$VITE_APP_RELEASES_LINK -t employees:latest .
+    - docker image prune -f
   only:
     - main
 
