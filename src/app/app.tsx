@@ -13,6 +13,13 @@ import "./main.css";
 import { LogoSvg } from "./ui/logo-svg";
 
 const DOMAIN = "https://employees.ccenter.uz";
+const URL_UPDATE =
+  "https://script.google.com/macros/s/AKfycbzLNvRo-BYbVV2Mko8KjQYB81i8JLiGhqmllwgOyfweanCcO25QhGUeu1G8Zs2iIIN-/exec?callback=handleResponse&ids=";
+
+const sheetId = "1VXyaHhX1QOqak1YRs5nss_Uv9UCbll3FbX5iQyS_4Os";
+const apiKey = "AIzaSyBSWX8JyvcZeGr0XiSgofYVdpITUjsviaw";
+const range = "baza-sotrudnikov!A1:V100000";
+const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
 interface DataType {
   key: React.Key;
   name: string;
@@ -144,11 +151,6 @@ const App: React.FC = () => {
   };
 
   const fetchData = async () => {
-    const sheetId = "1VXyaHhX1QOqak1YRs5nss_Uv9UCbll3FbX5iQyS_4Os";
-    const apiKey = "AIzaSyBSWX8JyvcZeGr0XiSgofYVdpITUjsviaw";
-    const range = "baza-sotrudnikov!A1:V100000";
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
-
     try {
       setTableLoading(true);
       const response = await fetch(url);
@@ -205,14 +207,10 @@ const App: React.FC = () => {
   };
 
   const statusWriter = (idsToUpdate: string[]) => {
-    fetch(
-      `https://script.google.com/macros/s/AKfycbzQGbJVrImSnPcSPlLV-gz9MNu7laoJmVW7KYA9l_pUqqOMoECwS16SUcXiioOJI9mE/exec?callback=handleResponse&ids=${idsToUpdate.join(
-        ",",
-      )}`,
-      {
-        method: "GET",
-      },
-    )
+    fetch(`${URL_UPDATE}${idsToUpdate.join(",")}`, {
+      mode: "no-cors",
+      method: "GET",
+    })
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
