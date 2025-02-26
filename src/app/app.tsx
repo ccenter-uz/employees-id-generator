@@ -222,12 +222,10 @@ const App: React.FC = () => {
 
       const filteredData = result.filter((item: any) => !!item["ID"]);
 
-      const departmentsData = filteredData.map((item: any) =>
-        item["BO'LIM NOMI"]?.trim(),
+      const departmentsData = filteredData.map(
+        (item: any) => item["BO'LIM NOMI"],
       );
-      const positionsData = filteredData.map((item: any) =>
-        item["Lavozim"]?.trim(),
-      );
+      const positionsData = filteredData.map((item: any) => item["Lavozim"]);
 
       setDepartments([...new Set(departmentsData)]);
       setPositions([...new Set(positionsData)]);
