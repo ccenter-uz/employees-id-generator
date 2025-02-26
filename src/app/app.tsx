@@ -1,10 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PrinterOutlined } from "@ant-design/icons";
-import { Button, Divider, Modal, Space, Table, Tag } from "antd";
+import {
+  Button,
+  Divider,
+  Modal,
+  notification,
+  Space,
+  Table,
+  Tag,
+  Typography,
+} from "antd";
 import type { TableColumnsType, TableProps } from "antd";
 import { AnyObject } from "antd/es/_util/type";
 import Search from "antd/es/input/Search";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import QRCode from "react-qr-code";
 import { Link } from "react-router-dom";
 import generatePDF, { Resolution, Margin } from "react-to-pdf";
@@ -20,45 +36,18 @@ const sheetId = "1VXyaHhX1QOqak1YRs5nss_Uv9UCbll3FbX5iQyS_4Os";
 const apiKey = "AIzaSyBSWX8JyvcZeGr0XiSgofYVdpITUjsviaw";
 const range = "baza-sotrudnikov!A1:V100000";
 const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
+
+const { Text } = Typography;
 interface DataType {
   key: React.Key;
   name: string;
   ["BEDJIK STATUS"]: string | boolean;
   FIO: string;
   ID: string;
+  ["BO'LIM NOMI"]: string;
+  Lavozim: string;
 }
-
-const columns: TableColumnsType<DataType> = [
-  {
-    title: "ID",
-    dataIndex: "ID",
-    render: (text: string) => <Link to={`/employee/${text}`}>{text}</Link>,
-  },
-  {
-    title: "FIO",
-    dataIndex: "FIO",
-  },
-  {
-    title: "BEDJIK STATUS",
-    dataIndex: "BEDJIK STATUS",
-    render: (val: string) => (
-      <Tag color={val === "TRUE" ? "green" : "red"}>
-        {val === "TRUE" ? "Given" : "Not Given"}
-      </Tag>
-    ),
-    filters: [
-      {
-        text: "Given",
-        value: "TRUE",
-      },
-      {
-        text: "Not Given",
-        value: "FALSE",
-      },
-    ],
-    onFilter: (value, record) => record["BEDJIK STATUS"] === value,
-  },
-];
+const Context = createContext({ name: "Default" });
 
 const App: React.FC = () => {
   const [selectedRowsLength, setSelectedRowsLength] = useState(0);
@@ -70,7 +59,61 @@ const App: React.FC = () => {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const targetRef = useRef(null);
+  const [api, contextHolder] = notification.useNotification();
+  const contextValue = useMemo(() => ({ name: "API FETCHING" }), []);
 
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [positions, setPositions] = useState<string[]>([]);
+  const [columns, setColumns] = useState<TableColumnsType<DataType>>([
+    {
+      title: "ID",
+      dataIndex: "ID",
+      render: (text: string) => <Link to={`/employee/${text}`}>{text}</Link>,
+    },
+    {
+      title: "FIO",
+      dataIndex: "FIO",
+    },
+    {
+      title: "BO'LIM NOMI",
+      dataIndex: "BO'LIM NOMI",
+      width: "600px",
+      render: (text: string) => <Text>{text}</Text>,
+      filters: [],
+      filterSearch: true,
+      onFilter: (value, record) => record.name.startsWith(value as string),
+    },
+    {
+      title: "LAVOZIM",
+      width: "300px",
+      dataIndex: "Lavozim",
+      render: (text: string) => <Text>{text}</Text>,
+      filters: [],
+      filterSearch: true,
+      onFilter: (value, record) => record.name.startsWith(value as string),
+    },
+    {
+      title: "BEDJIK STATUS",
+      dataIndex: "BEDJIK STATUS",
+      width: "100px",
+      render: (val: string) => (
+        <Tag color={val === "TRUE" ? "green" : "red"}>
+          {val === "TRUE" ? "Given" : "Not Given"}
+        </Tag>
+      ),
+      filters: [
+        {
+          text: "Given",
+          value: "TRUE",
+        },
+        {
+          text: "Not Given",
+          value: "FALSE",
+        },
+      ],
+      onFilter: (value, record) => record["BEDJIK STATUS"] === value,
+    },
+  ]);
   const showModal = () => {
     setIsModalOpen(true);
   };
@@ -178,10 +221,28 @@ const App: React.FC = () => {
         });
 
       const filteredData = result.filter((item: any) => !!item["ID"]);
+
+      const departmentsData = filteredData.map((item: any) =>
+        item["BO'LIM NOMI"]?.trim(),
+      );
+      const positionsData = filteredData.map((item: any) =>
+        item["Lavozim"]?.trim(),
+      );
+
+      setDepartments([...new Set(departmentsData)]);
+      setPositions([...new Set(positionsData)]);
+
       setData(filteredData);
       setConstData(filteredData);
+
+      api.success({
+        message: "Data fetched successfully",
+        duration: 3,
+      });
     } catch (error) {
-      console.error("Error fetching data:", error);
+      api.error({
+        message: "Error fetching data",
+      });
     } finally {
       setTableLoading(false);
     }
@@ -234,7 +295,34 @@ const App: React.FC = () => {
     if (searchText === "") {
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchText]);
+
+  useEffect(() => {
+    if (departments.length > 0 && positions.length > 0) {
+      setColumns((prev) => [
+        prev[0],
+        prev[1],
+        {
+          ...prev[2],
+          filters: departments.map((item) => ({
+            text: item,
+            value: item,
+          })),
+          onFilter: (value, record) => record["BO'LIM NOMI"] === value,
+        },
+        {
+          ...prev[3],
+          filters: positions.map((item) => ({
+            text: item,
+            value: item,
+          })),
+          onFilter: (value, record) => record["Lavozim"] === value,
+        },
+        prev[4],
+      ]);
+    }
+  }, [departments, positions]);
 
   useEffect(() => {
     if (searchText) {
@@ -259,156 +347,159 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div
-      style={{
-        padding: "20px",
-        maxWidth: "1800px",
-        minWidth: "800px",
-        margin: "0 auto ",
-      }}
-    >
-      <Space
+    <Context.Provider value={contextValue}>
+      {contextHolder}
+      <div
         style={{
-          width: "100%",
-          display: "flex",
-          justifyContent: "space-between",
+          padding: "20px",
+          maxWidth: "1800px",
+          minWidth: "800px",
+          margin: "0 auto ",
         }}
       >
-        <Search
-          placeholder="Search by ID"
-          allowClear
-          onSearch={(value) => setSearchText(value)}
-          style={{ width: 250 }}
-        />
-        <br />
-        <div>
-          <Button
-            style={{ width: "200px" }}
-            type="primary"
-            size="large"
-            disabled={selectedRowsLength === 0}
-            icon={<PrinterOutlined />}
-            onClick={showModal}
-          >
-            Print ({selectedRowsLength} selected)
-          </Button>
-          <Button
-            style={{ marginLeft: "8px" }}
-            danger
-            size="large"
-            onClick={resetSelection}
-          >
-            Reset
-          </Button>
-        </div>
-      </Space>
-      <Divider />
-      <Table
-        rowSelection={{ ...rowSelection }}
-        columns={columns}
-        dataSource={data}
-        loading={tableLoading}
-        bordered
-        pagination={{ pageSize: 30 }}
-      />
-      <Modal
-        title="Print"
-        open={isModalOpen}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        style={{
-          display: "flex",
-          justifyContent: "center",
-        }}
-        confirmLoading={pdfLoading}
-        cancelButtonProps={{ disabled: pdfLoading }}
-      >
-        <div
+        <Space
           style={{
-            display: "inline-flex",
-            boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-            padding: "10px",
+            width: "100%",
+            display: "flex",
+            justifyContent: "space-between",
           }}
         >
+          <Search
+            placeholder="Search by ID"
+            allowClear
+            onSearch={(value) => setSearchText(value)}
+            style={{ width: 250 }}
+          />
+          <br />
+          <div>
+            <Button
+              style={{ width: "200px" }}
+              type="primary"
+              size="large"
+              disabled={selectedRowsLength === 0}
+              icon={<PrinterOutlined />}
+              onClick={showModal}
+            >
+              Print ({selectedRowsLength} selected)
+            </Button>
+            <Button
+              style={{ marginLeft: "8px" }}
+              danger
+              size="large"
+              onClick={resetSelection}
+            >
+              Reset
+            </Button>
+          </div>
+        </Space>
+        <Divider />
+        <Table
+          rowSelection={{ ...rowSelection }}
+          columns={columns}
+          dataSource={data}
+          loading={tableLoading}
+          bordered
+          pagination={{ pageSize: 30 }}
+        />
+        <Modal
+          title="Print"
+          open={isModalOpen}
+          onOk={handleOk}
+          onCancel={handleCancel}
+          style={{
+            display: "flex",
+            justifyContent: "center",
+          }}
+          confirmLoading={pdfLoading}
+          cancelButtonProps={{ disabled: pdfLoading }}
+        >
           <div
-            ref={targetRef}
-            style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+            style={{
+              display: "inline-flex",
+              boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
+              padding: "10px",
+            }}
           >
-            {Array.from({ length: Math.ceil(selectedRows.length) }).map(
-              (item, index) => (
-                <div className="a4" key={index}>
-                  <div className="cards-container">
-                    {selectedRows[index].map((row: AnyObject) => (
-                      <div key={row.key}>
-                        <div className="card">
-                          <div className="card-header">
-                            <LogoSvg />
-                          </div>
+            <div
+              ref={targetRef}
+              style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+            >
+              {Array.from({ length: Math.ceil(selectedRows.length) }).map(
+                (item, index) => (
+                  <div className="a4" key={index}>
+                    <div className="cards-container">
+                      {selectedRows[index].map((row: AnyObject) => (
+                        <div key={row.key}>
+                          <div className="card">
+                            <div className="card-header">
+                              <LogoSvg />
+                            </div>
 
-                          <div className="card-body">
-                            <h1>{fullNameFormater(row["FIO"])}</h1>
-                            <div className="card-inner-container">
-                              <div className="card-qr">
-                                <QRCode
-                                  size={256}
-                                  fgColor="#3D6394"
-                                  value={DOMAIN + "/employee/" + row["ID"]}
-                                  viewBox={`0 0 256 256`}
-                                />
-                              </div>
-                              <div className="card-info">
-                                <p style={{ textWrap: "nowrap" }}>
-                                  {" "}
-                                  <strong>ID:</strong> {row["ID"]}
-                                </p>
-                                <p>
-                                  <strong>EXP:</strong> 12/
-                                  {new Date().getFullYear()}
-                                </p>
-                              </div>
-                              <div
-                                style={{
-                                  width: "100px",
-                                  height: "100px",
-                                  overflow: "hidden",
-                                  position: "relative",
-                                  display: "flex",
-                                  justifyContent: "center",
-                                  alignItems: "flex-start",
-                                  alignSelf: "flex-start",
-                                  backgroundColor: `${
-                                    row["PHOTO"] ? "#fff" : "#f0f0f0"
-                                  }`, // Fallback background
-                                }}
-                              >
-                                <img
-                                  className="card-image"
-                                  src={row["PHOTO"]}
-                                  alt="user-image"
-                                  width="100"
-                                  height="100"
+                            <div className="card-body">
+                              <h1>{fullNameFormater(row["FIO"])}</h1>
+                              <div className="card-inner-container">
+                                <div className="card-qr">
+                                  <QRCode
+                                    size={256}
+                                    fgColor="#3D6394"
+                                    value={DOMAIN + "/employee/" + row["ID"]}
+                                    viewBox={`0 0 256 256`}
+                                  />
+                                </div>
+                                <div className="card-info">
+                                  <p style={{ textWrap: "nowrap" }}>
+                                    {" "}
+                                    <strong>ID:</strong> {row["ID"]}
+                                  </p>
+                                  <p>
+                                    <strong>EXP:</strong> 12/
+                                    {new Date().getFullYear()}
+                                  </p>
+                                </div>
+                                <div
                                   style={{
-                                    position: "absolute",
-                                    minWidth: "100%",
-                                    minHeight: "100%",
-                                    top: "-6px",
-                                    left: 0,
+                                    width: "100px",
+                                    height: "100px",
+                                    overflow: "hidden",
+                                    position: "relative",
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "flex-start",
+                                    alignSelf: "flex-start",
+                                    backgroundColor: `${
+                                      row["PHOTO"] ? "#fff" : "#f0f0f0"
+                                    }`, // Fallback background
                                   }}
-                                />
+                                >
+                                  <img
+                                    className="card-image"
+                                    src={row["PHOTO"]}
+                                    alt="user-image"
+                                    width="100"
+                                    height="100"
+                                    style={{
+                                      position: "absolute",
+                                      minWidth: "100%",
+                                      minHeight: "100%",
+                                      top: "-6px",
+                                      left: 0,
+                                    }}
+                                  />
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ),
-            )}
+                ),
+              )}
+            </div>
           </div>
-        </div>
-      </Modal>
-    </div>
+        </Modal>
+      </div>
+    </Context.Provider>
   );
 };
 
