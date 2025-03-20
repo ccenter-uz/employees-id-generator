@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PrinterOutlined } from "@ant-design/icons";
+import {
+  PrinterOutlined,
+  ReloadOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 import {
   Button,
   Divider,
@@ -9,6 +13,7 @@ import {
   Table,
   Tag,
   Typography,
+  FloatButton,
 } from "antd";
 import type { TableColumnsType, TableProps } from "antd";
 import { AnyObject } from "antd/es/_util/type";
@@ -26,18 +31,12 @@ import { Link } from "react-router-dom";
 import generatePDF, { Resolution, Margin } from "react-to-pdf";
 
 import "./main.css";
+import { URL, URL_UPDATE, DOMAIN } from "./base-config";
 import { LogoSvg } from "./ui/logo-svg";
 
-const DOMAIN = "https://employees.ccenter.uz";
-const URL_UPDATE =
-  "https://script.google.com/macros/s/AKfycbzLNvRo-BYbVV2Mko8KjQYB81i8JLiGhqmllwgOyfweanCcO25QhGUeu1G8Zs2iIIN-/exec?callback=handleResponse&ids=";
+const url = URL;
 
-const sheetId = "1VXyaHhX1QOqak1YRs5nss_Uv9UCbll3FbX5iQyS_4Os";
-const apiKey = "AIzaSyBSWX8JyvcZeGr0XiSgofYVdpITUjsviaw";
-const range = "baza-sotrudnikov!A1:V100000";
-const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
-
-const { Text } = Typography;
+const { Text, Title } = Typography;
 interface DataType {
   key: React.Key;
   name: string;
@@ -52,9 +51,11 @@ const Context = createContext({ name: "Default" });
 const App: React.FC = () => {
   const [selectedRowsLength, setSelectedRowsLength] = useState(0);
   const [selectedRows, setSelectedRows] = useState<AnyObject[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [data, setData] = useState<DataType[]>([]);
   const [constData, setConstData] = useState<DataType[]>([]);
+  const [branch, setBranch] = useState<null | string>(null);
   const [tableLoading, setTableLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -172,21 +173,21 @@ const App: React.FC = () => {
   };
 
   const rowSelection: TableProps<DataType>["rowSelection"] = {
+    selectedRowKeys,
     onChange: (selectedRowKeys: React.Key[], selectedRows: AnyObject[]) => {
-      const localStorageData = localStorage.getItem("selectedRows");
-      const parsedData = localStorageData ? JSON.parse(localStorageData) : [];
-
-      const newData = [...parsedData, ...selectedRows]; // Add new data to parsedData.
+      const newData = [...selectedRows]; // Add new data to parsedData.
 
       const data = newData.filter(
         (item: AnyObject, index: number) =>
           newData.findIndex((i: AnyObject) => i.ID === item.ID) === index,
       );
       localStorage.setItem("selectedRows", JSON.stringify(data));
+      localStorage.setItem("selectedRowKeys", JSON.stringify(selectedRowKeys));
 
       const result = splitArray(data, 10);
       setSelectedRowsLength(data.length);
       setSelectedRows(result);
+      setSelectedRowKeys(selectedRowKeys);
     },
     getCheckboxProps: (record: any) => ({
       disabled: record["ID"] === "",
@@ -220,7 +221,11 @@ const App: React.FC = () => {
           return result;
         });
 
-      const filteredData = result.filter((item: any) => !!item["ID"]);
+      const aviableData = result.filter((item: any) => !!item["ID"]);
+
+      const filteredData = aviableData.filter(
+        (item: any) => item["FILIAL"] === branch,
+      );
 
       const departmentsData = filteredData.map(
         (item: any) => item["BO'LIM NOMI"],
@@ -262,7 +267,9 @@ const App: React.FC = () => {
   const resetSelection = () => {
     setSelectedRows([]);
     setSelectedRowsLength(0);
+    setSelectedRowKeys([]);
     localStorage.removeItem("selectedRows");
+    localStorage.removeItem("selectedRowKeys");
   };
 
   const statusWriter = (idsToUpdate: string[]) => {
@@ -290,11 +297,18 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (searchText === "") {
+    if (searchText) {
       fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchText]);
+
+  useEffect(() => {
+    if (branch) {
+      fetchData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branch]);
 
   useEffect(() => {
     if (departments.length > 0 && positions.length > 0) {
@@ -339,9 +353,21 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const localStorageData = localStorage.getItem("selectedRows");
+    const localStorageDataKeys = localStorage.getItem("selectedRowKeys");
     const parsedData = localStorageData ? JSON.parse(localStorageData) : [];
     setSelectedRowsLength(parsedData.length);
     setSelectedRows(splitArray(parsedData, 10));
+    setSelectedRowKeys(
+      localStorageDataKeys ? JSON.parse(localStorageDataKeys) : [],
+    );
+  }, []);
+
+  useEffect(() => {
+    if (localStorage.getItem("branch")) {
+      setBranch(localStorage.getItem("branch"));
+    } else {
+      window.location.replace("/log-in");
+    }
   }, []);
 
   return (
@@ -355,6 +381,25 @@ const App: React.FC = () => {
           margin: "0 auto ",
         }}
       >
+        <FloatButton.Group shape="square" style={{ insetInlineEnd: 24 }}>
+          <FloatButton
+            type={selectedRowsLength > 0 ? "primary" : "default"}
+            style={{
+              pointerEvents: selectedRowsLength > 0 ? "auto" : "none",
+            }}
+            icon={<PrinterOutlined />}
+            onClick={showModal}
+            badge={{ count: selectedRowsLength, overflowCount: 999 }}
+            tooltip={<div>Print ({selectedRowsLength} selected)</div>}
+          />
+          <FloatButton
+            style={{ border: "1px solid red" }}
+            icon={<ReloadOutlined style={{ color: "red" }} />}
+            onClick={resetSelection}
+            tooltip="Reset Selection"
+          />
+        </FloatButton.Group>
+
         <Space
           style={{
             width: "100%",
@@ -362,31 +407,29 @@ const App: React.FC = () => {
             justifyContent: "space-between",
           }}
         >
+          <Title level={3} style={{ margin: "0" }}>
+            {branch} - Employees Database
+          </Title>
           <Search
             placeholder="Search by ID"
             allowClear
             onSearch={(value) => setSearchText(value)}
-            style={{ width: 250 }}
+            style={{ width: 550 }}
           />
-          <br />
+
           <div>
-            <Button
-              style={{ width: "200px" }}
-              type="primary"
-              size="large"
-              disabled={selectedRowsLength === 0}
-              icon={<PrinterOutlined />}
-              onClick={showModal}
-            >
-              Print ({selectedRowsLength} selected)
-            </Button>
             <Button
               style={{ marginLeft: "8px" }}
               danger
+              type="primary"
               size="large"
-              onClick={resetSelection}
+              onClick={() => {
+                localStorage.clear();
+                window.location.href = "/log-in";
+              }}
+              icon={<LogoutOutlined />}
             >
-              Reset
+              Log Out
             </Button>
           </div>
         </Space>
@@ -404,6 +447,7 @@ const App: React.FC = () => {
           open={isModalOpen}
           onOk={handleOk}
           onCancel={handleCancel}
+          height="50vh"
           style={{
             display: "flex",
             justifyContent: "center",
@@ -416,6 +460,8 @@ const App: React.FC = () => {
               display: "inline-flex",
               boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
               padding: "10px",
+              height: "75vh",
+              overflow: "auto",
             }}
           >
             <div
