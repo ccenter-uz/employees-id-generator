@@ -4,7 +4,7 @@ import { AnyObject } from "antd/es/_util/type";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { URL as sheetUrl } from "./sheets-config";
+import { URL as sheetUrl } from "./base-config";
 import { LogoSvg } from "./ui/logo-svg";
 import "./main.css";
 
