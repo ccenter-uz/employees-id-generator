@@ -20,6 +20,7 @@ import { AnyObject } from "antd/es/_util/type";
 import Search from "antd/es/input/Search";
 import {
   createContext,
+  MutableRefObject,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -36,7 +37,6 @@ import { LogoSvg } from "./ui/logo-svg";
 
 const url = URL;
 const SPLIT_SIZE = 4;
-const PAGE_SIZE = 12;
 
 const { Text, Title } = Typography;
 interface DataType {
@@ -67,7 +67,6 @@ const App: React.FC = () => {
 
   const [departments, setDepartments] = useState<string[]>([]);
   const [positions, setPositions] = useState<string[]>([]);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [columns, setColumns] = useState<TableColumnsType<DataType>>([
     {
       title: "ID",
@@ -122,40 +121,68 @@ const App: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleOk = () => {
-    if (targetRef.current) {
-      setPdfLoading(true);
-      generatePDF(targetRef, {
-        filename: "employees.pdf",
-        method: "open",
-        resolution: Resolution.HIGH,
-        page: {
-          margin: Margin.SMALL,
-          format: "a4",
+  type TargetElementFinder = MutableRefObject<any> | (() => HTMLElement | null);
+  const pdfGenerator = (targetFinder: TargetElementFinder, filename: string) =>
+    generatePDF(targetFinder, {
+      filename: `${filename}.pdf`,
+      method: "open",
+      resolution: Resolution.HIGH,
+      page: {
+        margin: Margin.SMALL,
+        format: "a4",
+        // orientation: "portrait",
+      },
+      canvas: {
+        mimeType: "image/jpeg",
+        qualityRatio: 1,
+      },
+      overrides: {
+        pdf: {
+          compress: false,
         },
         canvas: {
-          mimeType: "image/jpeg",
-          qualityRatio: 1,
+          useCORS: true,
         },
-        overrides: {
-          pdf: {
-            compress: false,
-          },
-          canvas: {
-            useCORS: true,
-          },
-        },
-      })
-        .then((pdfBlob) => {
-          console.log(pdfBlob, "pdfBlob");
-        })
-        .catch((err) => {
-          console.error(err);
-        })
-        .finally(() => {
-          setPdfLoading(false);
-          setIsModalOpen(false);
-        });
+      },
+    });
+
+  const handleOk = async () => {
+    if (targetRef.current) {
+      setPdfLoading(true);
+      console.log(targetRef.current, "targetRef");
+
+      const target = targetRef.current as HTMLDivElement;
+
+      // Use 'children' instead of 'childNodes' to avoid text nodes
+      const pdfPromises = Array.from(target.children).map((item, index) => {
+        console.log(item, "item");
+
+        const targetFinder = () => item as HTMLElement;
+
+        // Ensure '.card-info' elements exist and avoid out-of-bound access
+        const cardInfoElements = target.querySelectorAll(".card-info");
+        if (cardInfoElements.length > index) {
+          const itemId =
+            cardInfoElements[index].children[0]?.textContent?.split(" ")[2] ||
+            "employee";
+          return pdfGenerator(targetFinder, itemId);
+        } else {
+          console.warn(`No card-info found for index ${index}`);
+          return Promise.resolve(); // Resolve to prevent breaking the promise chain
+        }
+      });
+
+      try {
+        await Promise.all(pdfPromises); // Wait for all PDF generation to complete
+        console.log("All PDFs generated successfully");
+      } catch (err) {
+        console.error("Error generating PDFs:", err);
+      } finally {
+        setPdfLoading(false); // Set loading state to false when done
+        setIsModalOpen(false); // Close modal after processing
+      }
+    } else {
+      console.error("Target element is not found");
     }
 
     const data = localStorage.getItem("selectedRows");
@@ -301,13 +328,6 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (searchText) {
-      fetchData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchText]);
-
-  useEffect(() => {
     if (branch) {
       fetchData();
     }
@@ -444,7 +464,7 @@ const App: React.FC = () => {
           dataSource={data}
           loading={tableLoading}
           bordered
-          pagination={{ pageSize }}
+          pagination={{ pageSize: 30 }}
         />
         <Modal
           title="Print"
@@ -464,6 +484,7 @@ const App: React.FC = () => {
               display: "inline-flex",
               boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
               padding: "10px",
+              height: "75vh",
               overflow: "auto",
             }}
           >
@@ -478,6 +499,28 @@ const App: React.FC = () => {
                       {selectedRows[index].map((row: AnyObject) => (
                         <div key={row.key}>
                           <div className="card">
+                            {/* <div
+                              style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100%",
+                                height: "100%",
+                                opacity: 0.5,
+                              }}
+                            >
+                              <img
+                                src="../../assets/beydjik-bg.svg"
+                                width="85mm"
+                                height="55mm"
+                                alt="background"
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            </div> */}
                             <div className="card-header">
                               <LogoSvg />
                             </div>
