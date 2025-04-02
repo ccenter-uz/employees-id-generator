@@ -35,6 +35,8 @@ import { URL, URL_UPDATE, DOMAIN } from "./base-config";
 import { LogoSvg } from "./ui/logo-svg";
 
 const url = URL;
+const SPLIT_SIZE = 4;
+const PAGE_SIZE = 12;
 
 const { Text, Title } = Typography;
 interface DataType {
@@ -65,6 +67,7 @@ const App: React.FC = () => {
 
   const [departments, setDepartments] = useState<string[]>([]);
   const [positions, setPositions] = useState<string[]>([]);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [columns, setColumns] = useState<TableColumnsType<DataType>>([
     {
       title: "ID",
@@ -128,9 +131,10 @@ const App: React.FC = () => {
         resolution: Resolution.HIGH,
         page: {
           margin: Margin.SMALL,
+          format: "a4",
         },
         canvas: {
-          mimeType: "image/png",
+          mimeType: "image/jpeg",
           qualityRatio: 1,
         },
         overrides: {
@@ -184,7 +188,7 @@ const App: React.FC = () => {
       localStorage.setItem("selectedRows", JSON.stringify(data));
       localStorage.setItem("selectedRowKeys", JSON.stringify(selectedRowKeys));
 
-      const result = splitArray(data, 10);
+      const result = splitArray(data, SPLIT_SIZE);
       setSelectedRowsLength(data.length);
       setSelectedRows(result);
       setSelectedRowKeys(selectedRowKeys);
@@ -356,7 +360,7 @@ const App: React.FC = () => {
     const localStorageDataKeys = localStorage.getItem("selectedRowKeys");
     const parsedData = localStorageData ? JSON.parse(localStorageData) : [];
     setSelectedRowsLength(parsedData.length);
-    setSelectedRows(splitArray(parsedData, 10));
+    setSelectedRows(splitArray(parsedData, SPLIT_SIZE));
     setSelectedRowKeys(
       localStorageDataKeys ? JSON.parse(localStorageDataKeys) : [],
     );
@@ -440,7 +444,7 @@ const App: React.FC = () => {
           dataSource={data}
           loading={tableLoading}
           bordered
-          pagination={{ pageSize: 30 }}
+          pagination={{ pageSize }}
         />
         <Modal
           title="Print"
@@ -460,7 +464,6 @@ const App: React.FC = () => {
               display: "inline-flex",
               boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
               padding: "10px",
-              height: "75vh",
               overflow: "auto",
             }}
           >
