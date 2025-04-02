@@ -479,13 +479,21 @@ const App: React.FC = () => {
                               <LogoSvg />
                             </div>
 
-                            <div className="card-body">
+                            <div
+                              className="card-body"
+                              style={{
+                                backgroundImage: `url(../../assets/beydjik-bg.svg)`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                                backgroundRepeat: "no-repeat",
+                              }}
+                            >
                               <h1>{fullNameFormater(row["FIO"])}</h1>
                               <div className="card-inner-container">
                                 <div className="card-qr">
                                   <QRCode
                                     size={256}
-                                    fgColor="#3D6394"
+                                    fgColor="rgb(12, 84, 160)"
                                     value={DOMAIN + "/employee/" + row["ID"]}
                                     viewBox={`0 0 256 256`}
                                   />
@@ -495,7 +503,7 @@ const App: React.FC = () => {
                                     {" "}
                                     <strong>ID:</strong> {row["ID"]}
                                   </p>
-                                  <p>
+                                  <p style={{ textWrap: "nowrap" }}>
                                     <strong>EXP:</strong> 12/
                                     {new Date().getFullYear()}
                                   </p>
