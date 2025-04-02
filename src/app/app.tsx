@@ -37,6 +37,7 @@ import { LogoSvg } from "./ui/logo-svg";
 
 const url = URL;
 const SPLIT_SIZE = 4;
+const PAGE_SIZE = 30;
 
 const { Text, Title } = Typography;
 interface DataType {
@@ -252,7 +253,9 @@ const App: React.FC = () => {
           return result;
         });
 
-      const aviableData = result.filter((item: any) => !!item["ID"]);
+      const aviableData = result
+        .filter((item: any) => !!item["ID"])
+        .filter((item: any) => !!item["PHOTO"]);
 
       const filteredData = aviableData.filter(
         (item: any) => item["FILIAL"] === branch,
@@ -499,28 +502,6 @@ const App: React.FC = () => {
                       {selectedRows[index].map((row: AnyObject) => (
                         <div key={row.key}>
                           <div className="card">
-                            {/* <div
-                              style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                width: "100%",
-                                height: "100%",
-                                opacity: 0.5,
-                              }}
-                            >
-                              <img
-                                src="../../assets/beydjik-bg.svg"
-                                width="85mm"
-                                height="55mm"
-                                alt="background"
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                }}
-                              />
-                            </div> */}
                             <div className="card-header">
                               <LogoSvg />
                             </div>
